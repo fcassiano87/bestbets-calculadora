@@ -229,13 +229,18 @@
         let lastTrigger = 'total';
 
         function init() {
-            odd1Input.addEventListener('input', () => recalculate('total'));
-            odd2Input.addEventListener('input', () => recalculate('total'));
-            totalInvestmentInput.addEventListener('input', () => recalculate('total'));
-            roundToInput.addEventListener('input', () => recalculate(lastTrigger));
+            // Monitora digitação geral para atualizar os resultados de lucros/retornos na tela
+            odd1Input.addEventListener('input', () => recalculate('total', false));
+            odd2Input.addEventListener('input', () => recalculate('total', false));
+            totalInvestmentInput.addEventListener('input', () => recalculate('total', false));
+            stake1Input.addEventListener('input', () => recalculate('stake1', false));
+            stake2Input.addEventListener('input', () => recalculate('stake2', false));
+            roundToInput.addEventListener('input', () => recalculate(lastTrigger, true));
 
-            stake1Input.addEventListener('input', () => recalculate('stake1'));
-            stake2Input.addEventListener('input', () => recalculate('stake2'));
+            // Executa o arredondamento e formata as caixas quando o usuário termina de digitar ou clica fora (blur)
+            totalInvestmentInput.addEventListener('blur', () => recalculate('total', true));
+            stake1Input.addEventListener('blur', () => recalculate('stake1', true));
+            stake2Input.addEventListener('blur', () => recalculate('stake2', true));
         }
 
         function setElementStyle(element, value) {
@@ -248,7 +253,7 @@
             }
         }
 
-        function recalculate(trigger) {
+        function recalculate(trigger, forceFormatAndRound) {
             if (isRecalculating) return;
             isRecalculating = true;
 
@@ -286,45 +291,55 @@
                 if (totalInvest > 0) {
                     let rawS1 = (totalInvest * inv1) / totalImplied;
                     s1 = Math.round(rawS1 / roundTo) * roundTo;
-                    
                     let rawS2 = (totalInvest * inv2) / totalImplied;
                     s2 = Math.round(rawS2 / roundTo) * roundTo;
                     
-                    stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
-                    stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
+                    if (forceFormatAndRound) {
+                        stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
+                        stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
+                    }
                 } else {
-                    s1 = 0;
-                    s2 = 0;
-                    stake1Input.value = "";
-                    stake2Input.value = "";
+                    s1 = 0; s2 = 0;
+                    if (forceFormatAndRound) {
+                        stake1Input.value = "";
+                        stake2Input.value = "";
+                    }
                 }
             } else if (trigger === 'stake1') {
                 if (s1 > 0) {
                     let expectedReturn = s1 * o1;
                     let rawS2 = expectedReturn / o2;
                     s2 = Math.round(rawS2 / roundTo) * roundTo;
-                    stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
+                    if (forceFormatAndRound) {
+                        stake1Input.value = s1.toFixed(2);
+                        stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
+                    }
                 } else {
                     s2 = 0;
-                    stake2Input.value = "";
+                    if (forceFormatAndRound) stake2Input.value = "";
                 }
             } else if (trigger === 'stake2') {
                 if (s2 > 0) {
                     let expectedReturn = s2 * o2;
                     let rawS1 = expectedReturn / o1;
                     s1 = Math.round(rawS1 / roundTo) * roundTo;
-                    stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
+                    if (forceFormatAndRound) {
+                        stake2Input.value = s2.toFixed(2);
+                        stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
+                    }
                 } else {
                     s1 = 0;
-                    stake1Input.value = "";
+                    if (forceFormatAndRound) stake1Input.value = "";
                 }
             }
 
             let actualTotalInvest = s1 + s2;
-            if (actualTotalInvest > 0) {
-                totalInvestmentInput.value = actualTotalInvest.toFixed(2);
-            } else {
-                totalInvestmentInput.value = "";
+            if (forceFormatAndRound) {
+                if (actualTotalInvest > 0) {
+                    totalInvestmentInput.value = actualTotalInvest.toFixed(2);
+                } else {
+                    totalInvestmentInput.value = "";
+                }
             }
 
             let ret1 = s1 * o1;
