@@ -1,118 +1,335 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora BestBets</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Surebet - Best Bets</title>
+    <style>
+        :root {
+            --bg-color: #0d1b1e;
+            --card-bg: #152a2d;
+            --accent-gold: #d4af37;
+            --text-color: #ffffff;
+            --text-muted: #a0b2b5;
+            --green-profit: #00ff88;
+            --input-bg: #ffffff;
+            --input-text: #152a2d;
+        }
 
-<style>
-body{
-    font-family: Arial, sans-serif;
-    background:#121212;
-    color:#fff;
-    margin:0;
-    padding:20px;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-.container{
-    max-width:500px;
-    margin:auto;
-    background:#1e1e1e;
-    padding:25px;
-    border-radius:15px;
-}
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-h1{
-    text-align:center;
-}
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
 
-input{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    margin-bottom:15px;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    box-sizing:border-box;
-}
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
+        .header img {
+            max-width: 180px;
+            height: auto;
+            border-radius: 50%;
+            border: 3px solid var(--accent-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
 
-.result{
-    margin-top:20px;
-    padding:15px;
-    background:#292929;
-    border-radius:10px;
-}
-</style>
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
 
+        @media (max-width: 600px) {
+            .grid-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .bet-column {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            border-top: 4px solid var(--accent-gold);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .input-group input[type="number"] {
+            width: 65%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            font-size: 16px;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .input-group input:focus {
+            outline: 2px solid var(--accent-gold);
+        }
+
+        .result-box {
+            background-color: rgba(0, 0, 0, 0.4);
+            padding: 10px 12px;
+            border-radius: 6px;
+            width: 65%;
+            text-align: right;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .profit-positive {
+            color: var(--green-profit);
+        }
+
+        .global-controls {
+            background: rgba(212, 175, 55, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .footer-results {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 2px solid rgba(212, 175, 55, 0.3);
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .footer-results .res-val {
+            color: var(--green-profit);
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+    <div class="container">
+        <div class="header">
+            <img src="Logo.png" alt="Best Bets Logo">
+        </div>
 
-<h1>🧮 Calculadora BestBets</h1>
+        <div class="grid-inputs">
+            <div class="bet-column">
+                <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 1</h3>
+                <div class="input-group">
+                    <label>Odd:</label>
+                    <input type="number" id="odd1" value="3.30" step="0.001" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Apostar:</label>
+                    <input type="number" id="stake1" value="50.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Retorno:</label>
+                    <div class="result-box" id="return1">0.00</div>
+                </div>
+                <div class="input-group">
+                    <label>Lucro Líq.:</label>
+                    <div class="result-box profit-positive" id="profit1">0.00</div>
+                </div>
+            </div>
 
-<label>Odd 1</label> <input type="number" step="0.01" id="odd1">
+            <div class="bet-column">
+                <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 2</h3>
+                <div class="input-group">
+                    <label>Odd:</label>
+                    <input type="number" id="odd2" value="1.667" step="0.001" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Apostar:</label>
+                    <input type="number" id="stake2" value="99.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Retorno:</label>
+                    <div class="result-box" id="return2">0.00</div>
+                </div>
+                <div class="input-group">
+                    <label>Lucro Líq.:</label>
+                    <div class="result-box profit-positive" id="profit2">0.00</div>
+                </div>
+            </div>
+        </div>
 
-<label>Odd 2</label> <input type="number" step="0.01" id="odd2">
+        <div class="global-controls">
+            <div class="input-group">
+                <label>Arredondar para:</label>
+                <input type="number" id="roundTo" value="1" step="1" min="1" style="width: 40%;">
+            </div>
+            <div class="input-group" style="margin-bottom: 0;">
+                <label>Investimento Total:</label>
+                <input type="number" id="totalInvestment" value="149.00" step="0.01" style="width: 40%;">
+            </div>
+        </div>
 
-<label>Valor Total (R$)</label> <input type="number" step="0.01" id="stake">
+        <div class="footer-results">
+            <div>RESULTADO: <span id="finalReturn" class="res-val">R$ 0,00</span></div>
+            <div>LUCRO: <span id="finalProfitPercent" class="res-val">0,00%</span></div>
+        </div>
+    </div>
 
-<button onclick="calcular()">Calcular</button>
+    <script>
+        // Elementos do DOM
+        const odd1Input = document.getElementById('odd1');
+        const stake1Input = document.getElementById('stake1');
+        const return1Div = document.getElementById('return1');
+        const profit1Div = document.getElementById('profit1');
 
-<div class="result" id="resultado"></div>
+        const odd2Input = document.getElementById('odd2');
+        const stake2Input = document.getElementById('stake2');
+        const return2Div = document.getElementById('return2');
+        const profit2Div = document.getElementById('profit2');
 
-</div>
+        const roundToInput = document.getElementById('roundTo');
+        const totalInvestmentInput = document.getElementById('totalInvestment');
+        
+        const finalReturnSpan = document.getElementById('finalReturn');
+        const finalProfitPercentSpan = document.getElementById('finalProfitPercent');
 
-<script>
+        // Flag para evitar loops infinitos de eventos recursivos
+        let isRecalculating = false;
 
-function calcular(){
+        function init() {
+            // Ouvintes para recálculo baseado no Investimento Total ou Odds
+            odd1Input.addEventListener('input', () => recalculate('total'));
+            odd2Input.addEventListener('input', () => recalculate('total'));
+            roundToInput.addEventListener('input', () => recalculate('total'));
+            totalInvestmentInput.addEventListener('input', () => recalculate('total'));
 
-let odd1 = parseFloat(document.getElementById("odd1").value);
-let odd2 = parseFloat(document.getElementById("odd2").value);
-let stake = parseFloat(document.getElementById("stake").value);
+            // Ouvintes caso o usuário decida cravar o valor de uma aposta específica
+            stake1Input.addEventListener('input', () => recalculate('stake1'));
+            stake2Input.addEventListener('input', () => recalculate('stake2'));
 
-if(!odd1 || !odd2 || !stake){
-    return;
-}
+            recalculate('total');
+        }
 
-let inv = (1/odd1)+(1/odd2);
+        function recalculate(trigger) {
+            if (isRecalculating) return;
+            isRecalculating = true;
 
-let lucroPercent = ((1/inv)-1)*100;
+            let o1 = parseFloat(odd1Input.value) || 0;
+            let o2 = parseFloat(odd2Input.value) || 0;
+            let roundTo = parseFloat(roundToInput.value) || 1;
 
-let aposta1 = stake*((1/odd1)/inv);
-let aposta2 = stake*((1/odd2)/inv);
+            if (o1 <= 0 || o2 <= 0) {
+                isRecalculating = false;
+                return;
+            }
 
-let retorno = aposta1*odd1;
-let lucro = retorno-stake;
+            let s1 = parseFloat(stake1Input.value) || 0;
+            let s2 = parseFloat(stake2Input.value) || 0;
+            let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
 
-document.getElementById("resultado").innerHTML=
-`
-<b>Apostar na Odd 1:</b> R$ ${aposta1.toFixed(2)}<br><br>
+            // Inversas das odds para cálculo de arbitragem
+            let inv1 = 1 / o1;
+            let inv2 = 1 / o2;
+            let totalImplied = inv1 + inv2;
 
-<b>Apostar na Odd 2:</b> R$ ${aposta2.toFixed(2)}<br><br>
+            if (trigger === 'total') {
+                // Distribui o valor com base no investimento total
+                let rawS1 = (totalInvest * inv1) / totalImplied;
+                // Aplica o arredondamento desejado para evitar quebras suspeitas nas casas
+                s1 = Math.round(rawS1 / roundTo) * roundTo;
+                s2 = totalInvest - s1;
+                // Também arredonda a segunda stake para manter o padrão limpo
+                s2 = Math.round(s2 / roundTo) * roundTo;
+                
+                // Atualiza os inputs na tela
+                stake1Input.value = s1.toFixed(2);
+                stake2Input.value = s2.toFixed(2);
+            } else if (trigger === 'stake1') {
+                // Calcula o retorno esperado da aposta 1 e equilibra a aposta 2
+                let expectedReturn = s1 * o1;
+                let rawS2 = expectedReturn / o2;
+                s2 = Math.round(rawS2 / roundTo) * roundTo;
+                stake2Input.value = s2.toFixed(2);
+            } else if (trigger === 'stake2') {
+                // Calcula o retorno esperado da aposta 2 e equilibra a aposta 1
+                let expectedReturn = s2 * o2;
+                let rawS1 = expectedReturn / o1;
+                s1 = Math.round(rawS1 / roundTo) * roundTo;
+                stake1Input.value = s1.toFixed(2);
+            }
 
-<b>Retorno Garantido:</b> R$ ${retorno.toFixed(2)}<br><br>
+            // Atualiza o Investimento Total real após os arredondamentos
+            let actualTotalInvest = s1 + s2;
+            totalInvestmentInput.value = actualTotalInvest.toFixed(2);
 
-<b>Lucro:</b> R$ ${lucro.toFixed(2)}<br><br>
+            // Cálculos de retornos e lucros individuais
+            let ret1 = s1 * o1;
+            let ret2 = s2 * o2;
 
-<b>Lucro %:</b> ${lucroPercent.toFixed(2)}%
-`;
+            return1Div.innerText = ret1.toFixed(2);
+            return2Div.innerText = ret2.toFixed(2);
 
-}
+            profit1Div.innerText = (ret1 - actualTotalInvest).toFixed(2);
+            profit2Div.innerText = (ret2 - actualTotalInvest).toFixed(2);
 
-</script>
+            // O resultado final garantido em uma Surebet perfeita considera o menor cenário possível
+            let worstCaseReturn = Math.min(ret1, ret2);
+            let finalProfitAmount = worstCaseReturn - actualTotalInvest;
+            let finalProfitPercent = actualTotalInvest > 0 ? (finalProfitAmount / actualTotalInvest) * 100 : 0;
 
+            // Formatação visual dos resultados inferiores
+            finalReturnSpan.innerText = `R$ ${worstCaseReturn.toFixed(2)}`;
+            finalProfitPercentSpan.innerText = `${finalProfitPercent.toFixed(2)}%`;
+
+            // Mudar cor caso seja prejuízo (ajuste dinâmico)
+            if (finalProfitAmount < 0) {
+                finalReturnSpan.style.color = '#ff4d4d';
+                finalProfitPercentSpan.style.color = '#ff4d4d';
+            } else {
+                finalReturnSpan.style.color = 'var(--green-profit)';
+                finalProfitPercentSpan.style.color = 'var(--green-profit)';
+            }
+
+            isRecalculating = false;
+        }
+
+        // Inicia a aplicação
+        init();
+    </script>
 </body>
 </html>
