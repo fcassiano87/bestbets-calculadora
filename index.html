@@ -154,7 +154,7 @@
                 <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 1</h3>
                 <div class="input-group">
                     <label>Odd:</label>
-                    <input type="number" id="odd1" placeholder="Ex: 3.30" step="0.001" min="1">
+                    <input type="number" id="odd1" placeholder="Ex: 3.30" step="0.001" min="0">
                 </div>
                 <div class="input-group">
                     <label>Apostar:</label>
@@ -174,7 +174,7 @@
                 <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 2</h3>
                 <div class="input-group">
                     <label>Odd:</label>
-                    <input type="number" id="odd2" placeholder="Ex: 1.667" step="0.001" min="1">
+                    <input type="number" id="odd2" placeholder="Ex: 1.667" step="0.001" min="0">
                 </div>
                 <div class="input-group">
                     <label>Apostar:</label>
@@ -194,7 +194,7 @@
         <div class="global-controls">
             <div class="input-group">
                 <label>Arredondar para:</label>
-                <input type="number" id="roundTo" value="1" step="1" min="1" style="width: 40%;">
+                <input type="number" id="roundTo" value="1" step="0.01" min="0.01" style="width: 40%;">
             </div>
             <div class="input-group" style="margin-bottom: 0;">
                 <label>Investimento Total:</label>
@@ -229,7 +229,6 @@
         let lastTrigger = 'total';
 
         function init() {
-            // Monitora digitação geral para atualizar os resultados de lucros/retornos na tela
             odd1Input.addEventListener('input', () => recalculate('total', false));
             odd2Input.addEventListener('input', () => recalculate('total', false));
             totalInvestmentInput.addEventListener('input', () => recalculate('total', false));
@@ -237,7 +236,6 @@
             stake2Input.addEventListener('input', () => recalculate('stake2', false));
             roundToInput.addEventListener('input', () => recalculate(lastTrigger, true));
 
-            // Executa o arredondamento e formata as caixas quando o usuário termina de digitar ou clica fora (blur)
             totalInvestmentInput.addEventListener('blur', () => recalculate('total', true));
             stake1Input.addEventListener('blur', () => recalculate('stake1', true));
             stake2Input.addEventListener('blur', () => recalculate('stake2', true));
@@ -263,8 +261,8 @@
 
             let o1 = parseFloat(odd1Input.value) || 0;
             let o2 = parseFloat(odd2Input.value) || 0;
-            let roundTo = parseFloat(roundToInput.value) || 1;
-            if (roundTo < 1) roundTo = 1;
+            let roundTo = parseFloat(roundToInput.value) || 0.01;
+            if (roundTo <= 0) roundTo = 0.01;
 
             if (o1 <= 0 || o2 <= 0) {
                 return1Div.innerText = "0.00";
@@ -357,13 +355,14 @@
             setElementStyle(profit2Div, p2);
 
             let worstCaseReturn = Math.min(ret1, ret2);
-            let finalProfitAmount = worstCaseReturn - actualTotalInvest;
-            let finalProfitPercent = actualTotalInvest > 0 ? (finalProfitAmount / actualTotalInvest) * 100 : 0;
+            
+            // Alinhamento exato com a métrica de lucro ideal do Telegram
+            let profitPercentTheoretical = ((1 / totalImplied) - 1) * 100;
 
             finalReturnSpan.innerText = "R$ " + worstCaseReturn.toFixed(2);
-            finalProfitPercentSpan.innerText = finalProfitPercent.toFixed(2) + "%";
+            finalProfitPercentSpan.innerText = profitPercentTheoretical.toFixed(2) + "%";
 
-            if (finalProfitAmount < 0) {
+            if (profitPercentTheoretical < 0) {
                 finalReturnSpan.className = "res-loss";
                 finalProfitPercentSpan.className = "res-loss";
             } else {
