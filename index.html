@@ -37,7 +37,7 @@
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 950px;
             background-color: var(--card-bg);
             border: 2px solid var(--accent-gold);
             border-radius: 12px;
@@ -47,7 +47,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .header img {
@@ -55,17 +55,40 @@
             height: auto;
         }
 
-        .grid-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
+        .top-controls {
+            display: flex;
+            gap: 20px;
             margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-gold);
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        @media (max-width: 600px) {
-            .grid-inputs {
-                grid-template-columns: 1fr;
-            }
+        .top-controls label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .top-controls select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
         }
 
         .bet-column {
@@ -73,10 +96,41 @@
             padding: 20px;
             border-radius: 8px;
             border-top: 4px solid var(--accent-gold);
+            position: relative;
+        }
+
+        .bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(197, 160, 53, 0.2);
+        }
+
+        .bet-title {
+            color: var(--accent-gold);
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .bet-options {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .bet-options label {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
         }
 
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -85,17 +139,17 @@
         .input-group label {
             font-weight: 600;
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .input-group input[type="number"] {
-            width: 65%;
-            padding: 8px 12px;
+            width: 60%;
+            padding: 7px 10px;
             border-radius: 6px;
             border: none;
             background-color: var(--input-bg);
             color: var(--input-text);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             text-align: right;
         }
@@ -106,13 +160,16 @@
 
         .result-box {
             background-color: rgba(0, 0, 0, 0.4);
-            padding: 10px 12px;
+            padding: 7px 10px;
             border-radius: 6px;
-            width: 65%;
+            width: 60%;
             text-align: right;
             font-weight: bold;
-            font-size: 16px;
-            min-height: 38px;
+            font-size: 15px;
+            min-height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
         }
 
         .global-controls {
@@ -121,6 +178,15 @@
             border-radius: 8px;
             margin-top: 20px;
             border: 1px solid rgba(197, 160, 53, 0.2);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .global-controls .input-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
         }
 
         .footer-results {
@@ -134,12 +200,8 @@
             font-weight: bold;
         }
 
-        .res-val {
-            color: var(--green-profit);
-        }
-        .res-loss {
-            color: var(--red-loss);
-        }
+        .res-val { color: var(--green-profit); }
+        .res-loss { color: var(--red-loss); }
     </style>
 </head>
 <body>
@@ -149,96 +211,156 @@
             <img src="https://i.postimg.cc/pTRm7MvP/Logo.png" alt="Best Bets Logo">
         </div>
 
-        <div class="grid-inputs">
-            <div class="bet-column">
-                <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 1</h3>
-                <div class="input-group">
-                    <label>Odd:</label>
-                    <input type="number" id="odd1" placeholder="Ex: 3.30" step="0.001" min="0">
-                </div>
-                <div class="input-group">
-                    <label>Apostar:</label>
-                    <input type="number" id="stake1" placeholder="0.00" step="0.01">
-                </div>
-                <div class="input-group">
-                    <label>Retorno:</label>
-                    <div class="result-box" id="return1">0.00</div>
-                </div>
-                <div class="input-group">
-                    <label>Lucro Líq.:</label>
-                    <div class="result-box" id="profit1">0.00</div>
-                </div>
+        <div class="top-controls">
+            <div>
+                <label for="numBets">Nº de Apostas:</label>
+                <select id="numBets">
+                    <option value="2">2 Apostas</option>
+                    <option value="3">3 Apostas</option>
+                    <option value="4">4 Apostas</option>
+                    <option value="5">5 Apostas</option>
+                    <option value="6">6 Apostas</option>
+                    <option value="7">7 Apostas</option>
+                    <option value="8">8 Apostas</option>
+                    <option value="9">9 Apostas</option>
+                    <option value="10">10 Apostas</option>
+                </select>
             </div>
+        </div>
 
-            <div class="bet-column">
-                <h3 style="color: var(--accent-gold); margin-bottom: 15px; text-align: center;">Aposta 2</h3>
-                <div class="input-group">
-                    <label>Odd:</label>
-                    <input type="number" id="odd2" placeholder="Ex: 1.667" step="0.001" min="0">
-                </div>
-                <div class="input-group">
-                    <label>Apostar:</label>
-                    <input type="number" id="stake2" placeholder="0.00" step="0.01">
-                </div>
-                <div class="input-group">
-                    <label>Retorno:</label>
-                    <div class="result-box" id="return2">0.00</div>
-                </div>
-                <div class="input-group">
-                    <label>Lucro Líq.:</label>
-                    <div class="result-box" id="profit2">0.00</div>
-                </div>
-            </div>
+        <div class="grid-inputs" id="betsContainer">
+            <!-- As colunas de apostas serão geradas via JS -->
         </div>
 
         <div class="global-controls">
             <div class="input-group">
                 <label>Arredondar para:</label>
-                <input type="number" id="roundTo" value="1" step="0.01" min="0.01" style="width: 40%;">
+                <input type="number" id="roundTo" value="1" step="0.01" min="0.01">
             </div>
-            <div class="input-group" style="margin-bottom: 0;">
+            <div class="input-group">
                 <label>Investimento Total:</label>
-                <input type="number" id="totalInvestment" placeholder="0.00" step="0.01" style="width: 40%;">
+                <input type="number" id="totalInvestment" placeholder="0.00" step="0.01">
             </div>
         </div>
 
         <div class="footer-results">
-            <div>RESULTADO: <span id="finalReturn" class="res-val">R$ 0.00</span></div>
+            <div>RETORNO MÍNIMO: <span id="finalReturn" class="res-val">R$ 0.00</span></div>
             <div>LUCRO: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
         </div>
     </div>
 
     <script>
-        const odd1Input = document.getElementById('odd1');
-        const stake1Input = document.getElementById('stake1');
-        const return1Div = document.getElementById('return1');
-        const profit1Div = document.getElementById('profit1');
+        let numBetsSelect = document.getElementById('numBets');
+        let betsContainer = document.getElementById('betsContainer');
+        let roundToInput = document.getElementById('roundTo');
+        let totalInvestmentInput = document.getElementById('totalInvestment');
+        let finalReturnSpan = document.getElementById('finalReturn');
+        let finalProfitPercentSpan = document.getElementById('finalProfitPercent');
 
-        const odd2Input = document.getElementById('odd2');
-        const stake2Input = document.getElementById('stake2');
-        const return2Div = document.getElementById('return2');
-        const profit2Div = document.getElementById('profit2');
-
-        const roundToInput = document.getElementById('roundTo');
-        const totalInvestmentInput = document.getElementById('totalInvestment');
-        
-        const finalReturnSpan = document.getElementById('finalReturn');
-        const finalProfitPercentSpan = document.getElementById('finalProfitPercent');
-
+        let betsData = [];
         let isRecalculating = false;
-        let lastTrigger = 'total';
+        let activeFixedIndex = -1; // Sem aposta fixa inicialmente
 
-        function init() {
-            odd1Input.addEventListener('input', () => recalculate('total', false));
-            odd2Input.addEventListener('input', () => recalculate('total', false));
-            totalInvestmentInput.addEventListener('input', () => recalculate('total', false));
-            stake1Input.addEventListener('input', () => recalculate('stake1', false));
-            stake2Input.addEventListener('input', () => recalculate('stake2', false));
-            roundToInput.addEventListener('input', () => recalculate(lastTrigger, true));
+        function buildBetColumns(count) {
+            betsContainer.innerHTML = '';
+            betsData = [];
 
-            totalInvestmentInput.addEventListener('blur', () => recalculate('total', true));
-            stake1Input.addEventListener('blur', () => recalculate('stake1', true));
-            stake2Input.addEventListener('blur', () => recalculate('stake2', true));
+            for (let i = 0; i < count; i++) {
+                betsData.push({
+                    odd: 0,
+                    comm: 0,
+                    stake: 0,
+                    distribute: true,
+                    fixed: false
+                });
+
+                let col = document.createElement('div');
+                col.className = 'bet-column';
+                col.innerHTML = `
+                    <div class="bet-header">
+                        <span class="bet-title">Aposta ${i + 1}</span>
+                        <div class="bet-options">
+                            <label title="Distribuir Lucro">
+                                <input type="checkbox" class="chk-d" data-index="${i}" checked> D
+                            </label>
+                            <label title="Aposta Fixa (Corrigida)">
+                                <input type="radio" name="fixedBet" class="rad-c" data-index="${i}"> C
+                            </label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Odd:</label>
+                        <input type="number" class="inp-odd" data-index="${i}" placeholder="Ex: 2.00" step="0.001" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Comissão (%):</label>
+                        <input type="number" class="inp-comm" data-index="${i}" placeholder="0" step="0.1" min="0" value="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Apostar (R$):</label>
+                        <input type="number" class="inp-stake" data-index="${i}" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label>Retorno Líq.:</label>
+                        <div class="result-box res-return" id="return-${i}">0.00</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Lucro Líq.:</label>
+                        <div class="result-box res-profit" id="profit-${i}">0.00</div>
+                    </div>
+                `;
+                betsContainer.appendChild(col);
+            }
+
+            attachEvents();
+            recalculate('total');
+        }
+
+        function attachEvents() {
+            document.querySelectorAll('.inp-odd').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].odd = parseFloat(e.target.value) || 0;
+                    recalculate('total');
+                });
+            });
+
+            document.querySelectorAll('.inp-comm').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].comm = parseFloat(e.target.value) || 0;
+                    recalculate('total');
+                });
+            });
+
+            document.querySelectorAll('.inp-stake').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].stake = parseFloat(e.target.value) || 0;
+                    recalculate(`stake-${idx}`);
+                });
+            });
+
+            document.querySelectorAll('.chk-d').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].distribute = e.target.checked;
+                    recalculate('total');
+                });
+            });
+
+            document.querySelectorAll('.rad-c').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    let idx = parseInt(e.target.dataset.index);
+                    if (activeFixedIndex === idx) {
+                        e.target.checked = false;
+                        activeFixedIndex = -1;
+                    } else {
+                        activeFixedIndex = idx;
+                    }
+                    recalculate('total');
+                });
+            });
         }
 
         function setElementStyle(element, value) {
@@ -251,118 +373,105 @@
             }
         }
 
-        function recalculate(trigger, forceFormatAndRound) {
+        function recalculate(trigger) {
             if (isRecalculating) return;
             isRecalculating = true;
 
-            if (trigger !== 'roundTo') {
-                lastTrigger = trigger;
-            }
-
-            let o1 = parseFloat(odd1Input.value) || 0;
-            let o2 = parseFloat(odd2Input.value) || 0;
+            let count = betsData.length;
             let roundTo = parseFloat(roundToInput.value) || 0.01;
             if (roundTo <= 0) roundTo = 0.01;
 
-            if (o1 <= 0 || o2 <= 0) {
-                return1Div.innerText = "0.00";
-                profit1Div.innerText = "0.00";
-                return2Div.innerText = "0.00";
-                profit2Div.innerText = "0.00";
+            let validOdds = true;
+            let effectiveOdds = [];
+
+            for (let i = 0; i < count; i++) {
+                let o = betsData[i].odd;
+                let c = betsData[i].comm;
+                if (o <= 1) validOdds = false;
+
+                // Odd líquida ajustada por comissão (ex: Betfair)
+                let effOdd = 1 + (o - 1) * (1 - c / 100);
+                effectiveOdds.push(effOdd);
+            }
+
+            if (!validOdds) {
+                for (let i = 0; i < count; i++) {
+                    document.getElementById(`return-${i}`).innerText = "0.00";
+                    document.getElementById(`profit-${i}`).innerText = "0.00";
+                }
                 finalReturnSpan.innerText = "R$ 0.00";
                 finalProfitPercentSpan.innerText = "0.00%";
-                finalReturnSpan.className = "res-val";
-                finalProfitPercentSpan.className = "res-val";
                 isRecalculating = false;
                 return;
             }
 
-            let s1 = parseFloat(stake1Input.value) || 0;
-            let s2 = parseFloat(stake2Input.value) || 0;
+            let stakes = new Array(count).fill(0);
             let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
 
-            let inv1 = 1 / o1;
-            let inv2 = 1 / o2;
-            let totalImplied = inv1 + inv2;
+            // Lógica de distribuição proporcional de stakes (Surebet)
+            let invSum = 0;
+            for (let i = 0; i < count; i++) {
+                invSum += 1 / effectiveOdds[i];
+            }
 
-            if (trigger === 'total') {
+            if (trigger === 'total' && activeFixedIndex === -1) {
                 if (totalInvest > 0) {
-                    let rawS1 = (totalInvest * inv1) / totalImplied;
-                    s1 = Math.round(rawS1 / roundTo) * roundTo;
-                    let rawS2 = (totalInvest * inv2) / totalImplied;
-                    s2 = Math.round(rawS2 / roundTo) * roundTo;
-                    
-                    if (forceFormatAndRound) {
-                        stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
-                        stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
-                    }
-                } else {
-                    s1 = 0; s2 = 0;
-                    if (forceFormatAndRound) {
-                        stake1Input.value = "";
-                        stake2Input.value = "";
+                    for (let i = 0; i < count; i++) {
+                        let rawS = (totalInvest * (1 / effectiveOdds[i])) / invSum;
+                        stakes[i] = Math.round(rawS / roundTo) * roundTo;
                     }
                 }
-            } else if (trigger === 'stake1') {
-                if (s1 > 0) {
-                    let expectedReturn = s1 * o1;
-                    let rawS2 = expectedReturn / o2;
-                    s2 = Math.round(rawS2 / roundTo) * roundTo;
-                    if (forceFormatAndRound) {
-                        stake1Input.value = s1.toFixed(2);
-                        stake2Input.value = s2 > 0 ? s2.toFixed(2) : "";
+            } else if (activeFixedIndex !== -1 || trigger.startsWith('stake-')) {
+                let fixIdx = activeFixedIndex !== -1 ? activeFixedIndex : parseInt(trigger.split('-')[1]);
+                let baseStake = parseFloat(document.querySelectorAll('.inp-stake')[fixIdx].value) || 0;
+                
+                if (baseStake > 0) {
+                    let targetReturn = baseStake * effectiveOdds[fixIdx];
+                    for (let i = 0; i < count; i++) {
+                        if (i === fixIdx) {
+                            stakes[i] = baseStake;
+                        } else {
+                            let rawS = targetReturn / effectiveOdds[i];
+                            stakes[i] = Math.round(rawS / roundTo) * roundTo;
+                        }
                     }
-                } else {
-                    s2 = 0;
-                    if (forceFormatAndRound) stake2Input.value = "";
-                }
-            } else if (trigger === 'stake2') {
-                if (s2 > 0) {
-                    let expectedReturn = s2 * o2;
-                    let rawS1 = expectedReturn / o1;
-                    s1 = Math.round(rawS1 / roundTo) * roundTo;
-                    if (forceFormatAndRound) {
-                        stake2Input.value = s2.toFixed(2);
-                        stake1Input.value = s1 > 0 ? s1.toFixed(2) : "";
-                    }
-                } else {
-                    s1 = 0;
-                    if (forceFormatAndRound) stake1Input.value = "";
                 }
             }
 
-            let actualTotalInvest = s1 + s2;
-            if (forceFormatAndRound) {
-                if (actualTotalInvest > 0) {
-                    totalInvestmentInput.value = actualTotalInvest.toFixed(2);
-                } else {
-                    totalInvestmentInput.value = "";
+            // Atualizar valores de stakes nas entradas
+            let actualTotalInvest = stakes.reduce((a, b) => a + b, 0);
+            totalInvestmentInput.value = actualTotalInvest > 0 ? actualTotalInvest.toFixed(2) : "";
+
+            let returns = [];
+            let profits = [];
+
+            for (let i = 0; i < count; i++) {
+                let inpStake = document.querySelectorAll('.inp-stake')[i];
+                if (document.activeElement !== inpStake) {
+                    inpStake.value = stakes[i] > 0 ? stakes[i].toFixed(2) : "";
                 }
+
+                let ret = stakes[i] * effectiveOdds[i];
+                let prof = ret - actualTotalInvest;
+
+                returns.push(ret);
+                profits.push(prof);
+
+                let retDiv = document.getElementById(`return-${i}`);
+                let profDiv = document.getElementById(`profit-${i}`);
+
+                retDiv.innerText = ret.toFixed(2);
+                profDiv.innerText = prof.toFixed(2);
+                setElementStyle(profDiv, prof);
             }
 
-            let ret1 = s1 * o1;
-            let ret2 = s2 * o2;
-
-            return1Div.innerText = ret1.toFixed(2);
-            return2Div.innerText = ret2.toFixed(2);
-
-            let p1 = ret1 - actualTotalInvest;
-            let p2 = ret2 - actualTotalInvest;
-
-            profit1Div.innerText = p1.toFixed(2);
-            profit2Div.innerText = p2.toFixed(2);
-            setElementStyle(profit1Div, p1);
-            setElementStyle(profit2Div, p2);
-
-            let worstCaseReturn = Math.min(ret1, ret2);
-            
-            // Alinhamento exato com a métrica de lucro ideal do Telegram
-            let profitPercentTheoretical = ((1 / totalImplied) - 1) * 100;
+            let worstCaseReturn = Math.min(...returns);
+            let profitPercent = actualTotalInvest > 0 ? (((1 / invSum) - 1) * 100) : 0;
 
             finalReturnSpan.innerText = "R$ " + worstCaseReturn.toFixed(2);
-            finalProfitPercentSpan.innerText = profitPercentTheoretical.toFixed(2) + "%";
+            finalProfitPercentSpan.innerText = profitPercent.toFixed(2) + "%";
 
-            if (profitPercentTheoretical < 0) {
+            if (profitPercent < 0) {
                 finalReturnSpan.className = "res-loss";
                 finalProfitPercentSpan.className = "res-loss";
             } else {
@@ -373,7 +482,15 @@
             isRecalculating = false;
         }
 
-        init();
+        numBetsSelect.addEventListener('change', (e) => {
+            buildBetColumns(parseInt(e.target.value));
+        });
+
+        roundToInput.addEventListener('input', () => recalculate('total'));
+        totalInvestmentInput.addEventListener('input', () => recalculate('total'));
+
+        // Inicializar com 2 apostas
+        buildBetColumns(2);
     </script>
 </body>
-</html>
+</html>    
