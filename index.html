@@ -116,7 +116,7 @@
 
         .bet-options {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
         }
 
@@ -127,6 +127,11 @@
             align-items: center;
             gap: 3px;
             cursor: pointer;
+        }
+
+        .chk-fb-label {
+            color: var(--green-profit) !important;
+            font-weight: bold;
         }
 
         .input-group {
@@ -258,9 +263,9 @@
                 <label for="numBets">Nº de Apostas:</label>
                 <select id="numBets">
                     <option value="2">2 Apostas</option>
-                    <option value="3">3 Apostas</option>
+                    <option value="3" selected>3 Apostas</option>
                     <option value="4">4 Apostas</option>
-                    <option value="5" selected>5 Apostas</option>
+                    <option value="5">5 Apostas</option>
                     <option value="6">6 Apostas</option>
                     <option value="7">7 Apostas</option>
                     <option value="8">8 Apostas</option>
@@ -277,10 +282,10 @@
         <div class="global-controls">
             <div class="input-group">
                 <label>Arredondar para:</label>
-                <input type="number" id="roundTo" value="0.01" step="0.01" min="0.01">
+                <input type="number" id="roundTo" value="1" step="0.01" min="0.01">
             </div>
             <div class="input-group">
-                <label>Investimento Total:</label>
+                <label>Investimento Total (Seu Bolso):</label>
                 <input type="number" id="totalInvestment" placeholder="0.00" step="0.01">
             </div>
         </div>
@@ -288,7 +293,7 @@
         <div class="footer-results">
             <div>RETORNO MÍNIMO: <span id="finalReturn" class="res-val">R$ 0.00</span></div>
             <div>LUCRO R$: <span id="finalProfitVal" class="res-val">R$ 0.00</span></div>
-            <div>LUCRO %: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
+            <div>EXTRAÇÃO/LUCRO %: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
         </div>
     </div>
 
@@ -317,6 +322,7 @@
                     stake: 0,
                     distribute: true,
                     fixed: false,
+                    isFreebet: false,
                     hasBoost: false,
                     boostPercent: 0
                 });
@@ -343,6 +349,9 @@
                     <div class="bet-header">
                         <span class="bet-title">Aposta ${i + 1}</span>
                         <div class="bet-options">
+                            <label title="Usar Freebet (Aposta Grátis)" class="chk-fb-label">
+                                <input type="checkbox" class="chk-fb" data-index="${i}"> FB
+                            </label>
                             <label title="Distribuir Lucro">
                                 <input type="checkbox" class="chk-d" data-index="${i}" checked> D
                             </label>
@@ -413,6 +422,14 @@
                 });
             });
 
+            document.querySelectorAll('.chk-fb').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].isFreebet = e.target.checked;
+                    recalculate('total');
+                });
+            });
+
             document.querySelectorAll('.rad-c').forEach(el => {
                 el.addEventListener('click', (e) => {
                     let idx = parseInt(e.target.dataset.index);
@@ -467,6 +484,7 @@
 
             let validOdds = true;
             let effectiveOdds = [];
+            let freebetMultiplier = [];
 
             for (let i = 0; i < count; i++) {
                 let o = betsData[i].odd;
@@ -486,6 +504,10 @@
 
                 let effOdd = 1 + (o - 1) * (1 - c / 100);
                 effectiveOdds.push(effOdd);
+                
+                // Em Freebet (SNR), o retorno é baseado em (Odd - 1)
+                let fbMult = betsData[i].isFreebet ? (effOdd - 1) : effOdd;
+                freebetMultiplier.push(fbMult);
             }
 
             if (!validOdds) {
@@ -501,17 +523,19 @@
             }
 
             let stakes = new Array(count).fill(0);
-            let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
+            
+            // Se a Aposta 1 tem FB ativado, usamos ela como aposta base automática
+            let fbIndex = betsData.findIndex(b => b.isFreebet);
 
-            let invSum = 0;
-            for (let i = 0; i < count; i++) {
-                invSum += 1 / effectiveOdds[i];
-            }
+            if (fbIndex !== -1 && activeFixedIndex === -1 && !trigger.startsWith('stake-')) {
+                let fbStake = parseFloat(document.querySelectorAll('.inp-stake')[fbIndex].value) || 50;
+                stakes[fbIndex] = fbStake;
+                
+                let targetReturn = fbStake * freebetMultiplier[fbIndex];
 
-            if (trigger === 'total' && activeFixedIndex === -1) {
-                if (totalInvest > 0) {
-                    for (let i = 0; i < count; i++) {
-                        let rawS = (totalInvest * (1 / effectiveOdds[i])) / invSum;
+                for (let i = 0; i < count; i++) {
+                    if (i !== fbIndex) {
+                        let rawS = targetReturn / effectiveOdds[i];
                         stakes[i] = Math.round(rawS / roundTo) * roundTo;
                     }
                 }
@@ -520,20 +544,38 @@
                 let baseStake = parseFloat(document.querySelectorAll('.inp-stake')[fixIdx].value) || 0;
                 
                 if (baseStake > 0) {
-                    let targetReturn = baseStake * effectiveOdds[fixIdx];
+                    stakes[fixIdx] = baseStake;
+                    let targetReturn = baseStake * freebetMultiplier[fixIdx];
+
                     for (let i = 0; i < count; i++) {
-                        if (i === fixIdx) {
-                            stakes[i] = baseStake;
-                        } else {
-                            let rawS = targetReturn / effectiveOdds[i];
+                        if (i !== fixIdx) {
+                            let rawS = targetReturn / freebetMultiplier[i];
                             stakes[i] = Math.round(rawS / roundTo) * roundTo;
                         }
                     }
                 }
+            } else {
+                let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
+                let invSum = 0;
+                for (let i = 0; i < count; i++) invSum += 1 / effectiveOdds[i];
+
+                if (totalInvest > 0) {
+                    for (let i = 0; i < count; i++) {
+                        let rawS = (totalInvest * (1 / effectiveOdds[i])) / invSum;
+                        stakes[i] = Math.round(rawS / roundTo) * roundTo;
+                    }
+                }
             }
 
-            let actualTotalInvest = stakes.reduce((a, b) => a + b, 0);
-            totalInvestmentInput.value = actualTotalInvest > 0 ? actualTotalInvest.toFixed(2) : "";
+            // O Investimento Total real (do seu bolso) exclui as stakes de Freebet
+            let ownPocketInvest = 0;
+            for (let i = 0; i < count; i++) {
+                if (!betsData[i].isFreebet) {
+                    ownPocketInvest += stakes[i];
+                }
+            }
+
+            totalInvestmentInput.value = ownPocketInvest > 0 ? ownPocketInvest.toFixed(2) : "";
 
             let returns = [];
             let profits = [];
@@ -544,8 +586,8 @@
                     inpStake.value = stakes[i] > 0 ? stakes[i].toFixed(2) : "";
                 }
 
-                let ret = stakes[i] * effectiveOdds[i];
-                let prof = ret - actualTotalInvest;
+                let ret = stakes[i] * freebetMultiplier[i];
+                let prof = ret - ownPocketInvest;
 
                 returns.push(ret);
                 profits.push(prof);
@@ -560,7 +602,17 @@
 
             let worstCaseReturn = Math.min(...returns);
             let worstCaseProfit = Math.min(...profits);
-            let profitPercent = actualTotalInvest > 0 ? (worstCaseProfit / actualTotalInvest) * 100 : 0;
+
+            // Cálculo da taxa de conversão da Freebet (Extração em R$)
+            let totalFbStake = 0;
+            for(let i=0; i<count; i++) if(betsData[i].isFreebet) totalFbStake += stakes[i];
+
+            let profitPercent = 0;
+            if (totalFbStake > 0) {
+                profitPercent = (worstCaseProfit / totalFbStake) * 100;
+            } else if (ownPocketInvest > 0) {
+                profitPercent = (worstCaseProfit / ownPocketInvest) * 100;
+            }
 
             finalReturnSpan.innerText = "R$ " + worstCaseReturn.toFixed(2);
             finalProfitValSpan.innerText = "R$ " + worstCaseProfit.toFixed(2);
@@ -581,7 +633,7 @@
         roundToInput.addEventListener('input', () => recalculate('total'));
         totalInvestmentInput.addEventListener('input', () => recalculate('total'));
 
-        buildBetColumns(5);
+        buildBetColumns(3);
     </script>
 </body>
 </html>
