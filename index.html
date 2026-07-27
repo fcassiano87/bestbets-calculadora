@@ -448,9 +448,9 @@
         }
 
         function setElementStyle(element, value) {
-            if (value < 0) {
+            if (value < -0.01) {
                 element.style.color = 'var(--red-loss)';
-            } else if (value > 0) {
+            } else if (value > 0.01) {
                 element.style.color = 'var(--green-profit)';
             } else {
                 element.style.color = 'var(--text-color)';
@@ -512,9 +512,7 @@
                 if (totalInvest > 0) {
                     for (let i = 0; i < count; i++) {
                         let rawS = (totalInvest * (1 / effectiveOdds[i])) / invSum;
-                        let rounded = Math.round(rawS / roundTo) * roundTo;
-                        // Regra de stake mínima de 0.50 para proteções
-                        stakes[i] = (rounded < 0.50 && rawS > 0) ? 0.50 : rounded;
+                        stakes[i] = Math.round(rawS / roundTo) * roundTo;
                     }
                 }
             } else if (activeFixedIndex !== -1 || trigger.startsWith('stake-')) {
@@ -528,8 +526,7 @@
                             stakes[i] = baseStake;
                         } else {
                             let rawS = targetReturn / effectiveOdds[i];
-                            let rounded = Math.round(rawS / roundTo) * roundTo;
-                            stakes[i] = (rounded < 0.50 && rawS > 0) ? 0.50 : rounded;
+                            stakes[i] = Math.round(rawS / roundTo) * roundTo;
                         }
                     }
                 }
@@ -569,7 +566,7 @@
             finalProfitValSpan.innerText = "R$ " + worstCaseProfit.toFixed(2);
             finalProfitPercentSpan.innerText = profitPercent.toFixed(2) + "%";
 
-            let styleClass = worstCaseProfit < 0 ? "res-loss" : "res-val";
+            let styleClass = worstCaseProfit < -0.01 ? "res-loss" : "res-val";
             finalReturnSpan.className = styleClass;
             finalProfitValSpan.className = styleClass;
             finalProfitPercentSpan.className = styleClass;
