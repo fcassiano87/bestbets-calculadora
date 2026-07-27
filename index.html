@@ -45,16 +45,6 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .header img {
-            max-width: 220px;
-            height: auto;
-        }
-
         .top-controls {
             display: flex;
             gap: 20px;
@@ -254,10 +244,6 @@
 <body>
 
     <div class="container">
-        <div class="header">
-            <img src="https://i.postimg.cc/pTRm7MvP/Logo.png" alt="Best Bets Logo">
-        </div>
-
         <div class="top-controls">
             <div>
                 <label for="numBets">Nº de Apostas:</label>
@@ -505,7 +491,6 @@
                 let effOdd = 1 + (o - 1) * (1 - c / 100);
                 effectiveOdds.push(effOdd);
                 
-                // Em Freebet (SNR), o retorno é baseado em (Odd - 1)
                 let fbMult = betsData[i].isFreebet ? (effOdd - 1) : effOdd;
                 freebetMultiplier.push(fbMult);
             }
@@ -523,8 +508,6 @@
             }
 
             let stakes = new Array(count).fill(0);
-            
-            // Se a Aposta 1 tem FB ativado, usamos ela como aposta base automática
             let fbIndex = betsData.findIndex(b => b.isFreebet);
 
             if (fbIndex !== -1 && activeFixedIndex === -1 && !trigger.startsWith('stake-')) {
@@ -567,7 +550,6 @@
                 }
             }
 
-            // O Investimento Total real (do seu bolso) exclui as stakes de Freebet
             let ownPocketInvest = 0;
             for (let i = 0; i < count; i++) {
                 if (!betsData[i].isFreebet) {
@@ -603,7 +585,6 @@
             let worstCaseReturn = Math.min(...returns);
             let worstCaseProfit = Math.min(...profits);
 
-            // Cálculo da taxa de conversão da Freebet (Extração em R$)
             let totalFbStake = 0;
             for(let i=0; i<count; i++) if(betsData[i].isFreebet) totalFbStake += stakes[i];
 
