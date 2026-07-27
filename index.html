@@ -158,6 +158,46 @@
             outline: 2px solid var(--accent-gold);
         }
 
+        .boost-group {
+            background: rgba(197, 160, 53, 0.08);
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px dashed rgba(197, 160, 53, 0.4);
+        }
+
+        .boost-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        .boost-controls label {
+            font-size: 12px;
+            color: var(--accent-gold);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .boost-controls input[type="number"] {
+            width: 45%;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .boost-info {
+            font-size: 11px;
+            color: var(--green-profit);
+            text-align: right;
+            margin-top: 4px;
+            font-weight: bold;
+            display: none;
+        }
+
         .result-box {
             background-color: rgba(0, 0, 0, 0.4);
             padding: 7px 10px;
@@ -229,7 +269,7 @@
         </div>
 
         <div class="grid-inputs" id="betsContainer">
-            <!-- As colunas de apostas serão geradas via JS -->
+            <!-- Colunas geradas via JS -->
         </div>
 
         <div class="global-controls">
@@ -259,7 +299,7 @@
 
         let betsData = [];
         let isRecalculating = false;
-        let activeFixedIndex = -1; // Sem aposta fixa inicialmente
+        let activeFixedIndex = -1;
 
         function buildBetColumns(count) {
             betsContainer.innerHTML = '';
@@ -271,11 +311,30 @@
                     comm: 0,
                     stake: 0,
                     distribute: true,
-                    fixed: false
+                    fixed: false,
+                    hasBoost: false,
+                    boostPercent: 0
                 });
 
                 let col = document.createElement('div');
                 col.className = 'bet-column';
+
+                // Bloco exclusivo de Boost na Aposta 1
+                let boostHTML = '';
+                if (i === 0) {
+                    boostHTML = `
+                        <div class="boost-group">
+                            <div class="boost-controls">
+                                <label title="Ativar Super Odds / Boost">
+                                    <input type="checkbox" id="chkBoost"> Boost %
+                                </label>
+                                <input type="number" id="inpBoost" placeholder="Ex: 10" step="1" min="0" disabled>
+                            </div>
+                            <div class="boost-info" id="boostInfo">Odd Turbinada: 1.00</div>
+                        </div>
+                    `;
+                }
+
                 col.innerHTML = `
                     <div class="bet-header">
                         <span class="bet-title">Aposta ${i + 1}</span>
@@ -292,6 +351,7 @@
                         <label>Odd:</label>
                         <input type="number" class="inp-odd" data-index="${i}" placeholder="Ex: 2.00" step="0.001" min="0">
                     </div>
+                    ${boostHTML}
                     <div class="input-group">
                         <label>Comissão (%):</label>
                         <input type="number" class="inp-comm" data-index="${i}" placeholder="0" step="0.1" min="0" value="0">
@@ -361,6 +421,27 @@
                     recalculate('total');
                 });
             });
+
+            // Eventos específicos do Boost (Aposta 1)
+            let chkBoost = document.getElementById('chkBoost');
+            let inpBoost = document.getElementById('inpBoost');
+
+            if (chkBoost && inpBoost) {
+                chkBoost.addEventListener('change', (e) => {
+                    let active = e.target.checked;
+                    inpBoost.disabled = !active;
+                    betsData[0].hasBoost = active;
+                    if (!active) {
+                        document.getElementById('boostInfo').style.display = 'none';
+                    }
+                    recalculate('total');
+                });
+
+                inpBoost.addEventListener('input', (e) => {
+                    betsData[0].boostPercent = parseFloat(e.target.value) || 0;
+                    recalculate('total');
+                });
+            }
         }
 
         function setElementStyle(element, value) {
@@ -387,9 +468,22 @@
             for (let i = 0; i < count; i++) {
                 let o = betsData[i].odd;
                 let c = betsData[i].comm;
+
+                // Aplicação do Boost na Aposta 1:
+                // Fórmula de Boost de Lucro: Odd Turbinada = 1 + (Odd - 1) * (1 + Boost/100)
+                if (i === 0 && betsData[0].hasBoost && betsData[0].boostPercent > 0) {
+                    let boostedOdd = 1 + (o - 1) * (1 + betsData[0].boostPercent / 100);
+                    let boostInfo = document.getElementById('boostInfo');
+                    if (boostInfo && o > 1) {
+                        boostInfo.innerText = `Odd Turbinada: ${boostedOdd.toFixed(3)}`;
+                        boostInfo.style.display = 'block';
+                    }
+                    o = boostedOdd;
+                }
+
                 if (o <= 1) validOdds = false;
 
-                // Odd líquida ajustada por comissão (ex: Betfair)
+                // Odd líquida ajustada por comissão
                 let effOdd = 1 + (o - 1) * (1 - c / 100);
                 effectiveOdds.push(effOdd);
             }
@@ -408,7 +502,6 @@
             let stakes = new Array(count).fill(0);
             let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
 
-            // Lógica de distribuição proporcional de stakes (Surebet)
             let invSum = 0;
             for (let i = 0; i < count; i++) {
                 invSum += 1 / effectiveOdds[i];
@@ -438,7 +531,6 @@
                 }
             }
 
-            // Atualizar valores de stakes nas entradas
             let actualTotalInvest = stakes.reduce((a, b) => a + b, 0);
             totalInvestmentInput.value = actualTotalInvest > 0 ? actualTotalInvest.toFixed(2) : "";
 
@@ -489,8 +581,7 @@
         roundToInput.addEventListener('input', () => recalculate('total'));
         totalInvestmentInput.addEventListener('input', () => recalculate('total'));
 
-        // Inicializar com 2 apostas
         buildBetColumns(2);
     </script>
 </body>
-</html>    
+</html>
