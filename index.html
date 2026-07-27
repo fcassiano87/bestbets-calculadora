@@ -37,7 +37,7 @@
 
         .container {
             width: 100%;
-            max-width: 950px;
+            max-width: 980px;
             background-color: var(--card-bg);
             border: 2px solid var(--accent-gold);
             border-radius: 12px;
@@ -236,8 +236,10 @@
             align-items: center;
             padding-top: 20px;
             border-top: 2px solid rgba(197, 160, 53, 0.3);
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .res-val { color: var(--green-profit); }
@@ -258,7 +260,7 @@
                     <option value="2">2 Apostas</option>
                     <option value="3">3 Apostas</option>
                     <option value="4">4 Apostas</option>
-                    <option value="5">5 Apostas</option>
+                    <option value="5" selected>5 Apostas</option>
                     <option value="6">6 Apostas</option>
                     <option value="7">7 Apostas</option>
                     <option value="8">8 Apostas</option>
@@ -275,7 +277,7 @@
         <div class="global-controls">
             <div class="input-group">
                 <label>Arredondar para:</label>
-                <input type="number" id="roundTo" value="1" step="0.01" min="0.01">
+                <input type="number" id="roundTo" value="0.01" step="0.01" min="0.01">
             </div>
             <div class="input-group">
                 <label>Investimento Total:</label>
@@ -285,7 +287,8 @@
 
         <div class="footer-results">
             <div>RETORNO MÍNIMO: <span id="finalReturn" class="res-val">R$ 0.00</span></div>
-            <div>LUCRO: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
+            <div>LUCRO R$: <span id="finalProfitVal" class="res-val">R$ 0.00</span></div>
+            <div>LUCRO %: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
         </div>
     </div>
 
@@ -294,7 +297,9 @@
         let betsContainer = document.getElementById('betsContainer');
         let roundToInput = document.getElementById('roundTo');
         let totalInvestmentInput = document.getElementById('totalInvestment');
+        
         let finalReturnSpan = document.getElementById('finalReturn');
+        let finalProfitValSpan = document.getElementById('finalProfitVal');
         let finalProfitPercentSpan = document.getElementById('finalProfitPercent');
 
         let betsData = [];
@@ -319,7 +324,6 @@
                 let col = document.createElement('div');
                 col.className = 'bet-column';
 
-                // Bloco exclusivo de Boost na Aposta 1
                 let boostHTML = '';
                 if (i === 0) {
                     boostHTML = `
@@ -328,7 +332,7 @@
                                 <label title="Ativar Super Odds / Boost">
                                     <input type="checkbox" id="chkBoost"> Boost %
                                 </label>
-                                <input type="number" id="inpBoost" placeholder="Ex: 10" step="1" min="0" disabled>
+                                <input type="number" id="inpBoost" placeholder="Ex: 20" step="1" min="0" disabled>
                             </div>
                             <div class="boost-info" id="boostInfo">Odd Turbinada: 1.00</div>
                         </div>
@@ -422,7 +426,6 @@
                 });
             });
 
-            // Eventos específicos do Boost (Aposta 1)
             let chkBoost = document.getElementById('chkBoost');
             let inpBoost = document.getElementById('inpBoost');
 
@@ -469,8 +472,6 @@
                 let o = betsData[i].odd;
                 let c = betsData[i].comm;
 
-                // Aplicação do Boost na Aposta 1:
-                // Fórmula de Boost de Lucro: Odd Turbinada = 1 + (Odd - 1) * (1 + Boost/100)
                 if (i === 0 && betsData[0].hasBoost && betsData[0].boostPercent > 0) {
                     let boostedOdd = 1 + (o - 1) * (1 + betsData[0].boostPercent / 100);
                     let boostInfo = document.getElementById('boostInfo');
@@ -483,7 +484,6 @@
 
                 if (o <= 1) validOdds = false;
 
-                // Odd líquida ajustada por comissão
                 let effOdd = 1 + (o - 1) * (1 - c / 100);
                 effectiveOdds.push(effOdd);
             }
@@ -494,6 +494,7 @@
                     document.getElementById(`profit-${i}`).innerText = "0.00";
                 }
                 finalReturnSpan.innerText = "R$ 0.00";
+                finalProfitValSpan.innerText = "R$ 0.00";
                 finalProfitPercentSpan.innerText = "0.00%";
                 isRecalculating = false;
                 return;
@@ -511,7 +512,9 @@
                 if (totalInvest > 0) {
                     for (let i = 0; i < count; i++) {
                         let rawS = (totalInvest * (1 / effectiveOdds[i])) / invSum;
-                        stakes[i] = Math.round(rawS / roundTo) * roundTo;
+                        let rounded = Math.round(rawS / roundTo) * roundTo;
+                        // Regra de stake mínima de 0.50 para proteções
+                        stakes[i] = (rounded < 0.50 && rawS > 0) ? 0.50 : rounded;
                     }
                 }
             } else if (activeFixedIndex !== -1 || trigger.startsWith('stake-')) {
@@ -525,7 +528,8 @@
                             stakes[i] = baseStake;
                         } else {
                             let rawS = targetReturn / effectiveOdds[i];
-                            stakes[i] = Math.round(rawS / roundTo) * roundTo;
+                            let rounded = Math.round(rawS / roundTo) * roundTo;
+                            stakes[i] = (rounded < 0.50 && rawS > 0) ? 0.50 : rounded;
                         }
                     }
                 }
@@ -558,18 +562,17 @@
             }
 
             let worstCaseReturn = Math.min(...returns);
-            let profitPercent = actualTotalInvest > 0 ? (((1 / invSum) - 1) * 100) : 0;
+            let worstCaseProfit = Math.min(...profits);
+            let profitPercent = actualTotalInvest > 0 ? (worstCaseProfit / actualTotalInvest) * 100 : 0;
 
             finalReturnSpan.innerText = "R$ " + worstCaseReturn.toFixed(2);
+            finalProfitValSpan.innerText = "R$ " + worstCaseProfit.toFixed(2);
             finalProfitPercentSpan.innerText = profitPercent.toFixed(2) + "%";
 
-            if (profitPercent < 0) {
-                finalReturnSpan.className = "res-loss";
-                finalProfitPercentSpan.className = "res-loss";
-            } else {
-                finalReturnSpan.className = "res-val";
-                finalProfitPercentSpan.className = "res-val";
-            }
+            let styleClass = worstCaseProfit < 0 ? "res-loss" : "res-val";
+            finalReturnSpan.className = styleClass;
+            finalProfitValSpan.className = styleClass;
+            finalProfitPercentSpan.className = styleClass;
 
             isRecalculating = false;
         }
@@ -581,7 +584,7 @@
         roundToInput.addEventListener('input', () => recalculate('total'));
         totalInvestmentInput.addEventListener('input', () => recalculate('total'));
 
-        buildBetColumns(2);
+        buildBetColumns(5);
     </script>
 </body>
 </html>
