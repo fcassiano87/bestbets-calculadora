@@ -557,7 +557,10 @@
                 }
             }
 
-            totalInvestmentInput.value = ownPocketInvest > 0 ? ownPocketInvest.toFixed(2) : "";
+            // CORREÇÃO: Só atualiza o valor do campo se o usuário NÃO estiver digitando nele
+            if (document.activeElement !== totalInvestmentInput) {
+                totalInvestmentInput.value = ownPocketInvest > 0 ? ownPocketInvest.toFixed(2) : "";
+            }
 
             let returns = [];
             let profits = [];
