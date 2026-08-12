@@ -314,8 +314,8 @@
                 <input type="number" id="roundTo" value="1" step="0.01" min="0.01">
             </div>
             <div class="input-group">
-                <label>Retenção FB / Extração (%):</label>
-                <input type="number" id="extRate" value="70" step="1" min="0" max="100" title="Porcentagem média obtida ao converter a Freebet se perder">
+                <label>Retenção FB Futura (%):</label>
+                <input type="number" id="extRate" value="70" step="1" min="0" max="100" title="Porcentagem estimada de conversão da Freebet a receber">
             </div>
             <div class="input-group">
                 <label>Investimento Total (Seu Bolso):</label>
@@ -325,7 +325,7 @@
 
         <div class="footer-results">
             <div>RETORNO MÍNIMO: <span id="finalReturn" class="res-val">R$ 0.00</span></div>
-            <div>LUCRO R$: <span id="finalProfitVal" class="res-val">R$ 0.00</span></div>
+            <div>LUCRO MÍNIMO R$: <span id="finalProfitVal" class="res-val">R$ 0.00</span></div>
             <div>EXTRAÇÃO/LUCRO %: <span id="finalProfitPercent" class="res-val">0.00%</span></div>
         </div>
     </div>
@@ -387,7 +387,7 @@
                     <div class="bet-header">
                         <input type="text" class="bet-title-input" id="title-${i}" value="Aposta ${i + 1}" data-index="${i}" title="Clique para renomear (Ex: Bet365, Betano)">
                         <div class="bet-options">
-                            <label title="Reembolso em Freebet se perder nesta casa" class="chk-ext-label">
+                            <label title="Qualificação de Freebet (Gerar Bônus)" class="chk-ext-label">
                                 <input type="checkbox" class="chk-ext" data-index="${i}"> E
                             </label>
                             <label title="Aposta Contra (Lay - Exchange)" class="chk-lay-label">
@@ -630,17 +630,18 @@
             let fbIndex = betsData.findIndex(b => b.isFreebet);
             let extIndex = betsData.findIndex(b => b.isExtraction);
 
-            // CÁLCULO DE EXTRAÇÃO DE REEMBOLSO (FLAG E)
+            // CÁLCULO DE APOSTA QUALIFICATIVA (FLAG E) - COBERTURA SECA SEM ANTECIPAR FREEBET
             if (extIndex !== -1 && !trigger.startsWith('stake-') && activeFixedIndex === -1) {
-                let extStake = parseFloat(document.querySelectorAll('.inp-stake')[extIndex].value) || 50;
+                let extStake = parseFloat(document.querySelectorAll('.inp-stake')[extIndex].value) || 20;
                 stakes[extIndex] = extStake;
 
-                // Em aposta com reembolso em FB, se a casa perder você reavalia a perda devolvendo extPercent
-                let targetReturn = extStake * (effectiveOdds[extIndex] - extPercent);
+                // Cobertura seca para garantir o valor apostado de volta na vitória das outras
+                let targetReturn = extStake; 
 
                 for (let i = 0; i < count; i++) {
                     if (i !== extIndex) {
-                        let rawS = targetReturn / freebetMultiplier[i];
+                        let rawS = targetReturn / (freebetMultiplier[i] - 1);
+                        if (rawS < 0) rawS = targetReturn / freebetMultiplier[i];
                         stakes[i] = Math.round(rawS / roundTo) * roundTo;
                     }
                 }
@@ -735,7 +736,7 @@
 
                 let ret = stakes[i] * freebetMultiplier[i];
 
-                // Se a casa com Flag "E" (Extração/Reembolso) PERDER, adicionamos o valor convertido da Freebet ao retorno
+                // Adiciona o valor estimado da Freebet resgatada se a casa do Bônus (Flag E) PERDER
                 if (extIndex !== -1 && i !== extIndex) {
                     let fbRefundValue = stakes[extIndex] * extPercent;
                     ret += fbRefundValue;
