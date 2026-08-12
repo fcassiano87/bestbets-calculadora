@@ -14,6 +14,7 @@
             --green-profit: #00ff88;
             --red-loss: #ff4d4d;
             --pink-lay: #ff6b81;
+            --purple-ext: #a29bfe;
             --input-bg: #ffffff;
             --input-text: #112225;
         }
@@ -96,6 +97,11 @@
             background: rgba(255, 107, 129, 0.05);
         }
 
+        .bet-column.is-ext-mode {
+            border-top-color: var(--purple-ext);
+            background: rgba(162, 155, 254, 0.05);
+        }
+
         .bet-header {
             display: flex;
             justify-content: space-between;
@@ -103,21 +109,37 @@
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 1px solid rgba(197, 160, 53, 0.2);
+            gap: 5px;
         }
 
-        .bet-title {
+        .bet-title-input {
             color: var(--accent-gold);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
+            background: transparent;
+            border: none;
+            border-bottom: 1px dashed transparent;
+            width: 110px;
+            padding: 2px 0;
+            transition: border-color 0.2s;
         }
 
-        .bet-column.is-lay-mode .bet-title {
+        .bet-title-input:hover, .bet-title-input:focus {
+            border-bottom-color: var(--accent-gold);
+            outline: none;
+        }
+
+        .bet-column.is-lay-mode .bet-title-input {
             color: var(--pink-lay);
+        }
+
+        .bet-column.is-ext-mode .bet-title-input {
+            color: var(--purple-ext);
         }
 
         .bet-options {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
@@ -137,6 +159,11 @@
 
         .chk-lay-label {
             color: var(--pink-lay) !important;
+            font-weight: bold;
+        }
+
+        .chk-ext-label {
+            color: var(--purple-ext) !important;
             font-weight: bold;
         }
 
@@ -287,6 +314,10 @@
                 <input type="number" id="roundTo" value="1" step="0.01" min="0.01">
             </div>
             <div class="input-group">
+                <label>Retenção FB / Extração (%):</label>
+                <input type="number" id="extRate" value="70" step="1" min="0" max="100" title="Porcentagem média obtida ao converter a Freebet se perder">
+            </div>
+            <div class="input-group">
                 <label>Investimento Total (Seu Bolso):</label>
                 <input type="number" id="totalInvestment" placeholder="0.00" step="0.01">
             </div>
@@ -303,6 +334,7 @@
         let numBetsSelect = document.getElementById('numBets');
         let betsContainer = document.getElementById('betsContainer');
         let roundToInput = document.getElementById('roundTo');
+        let extRateInput = document.getElementById('extRate');
         let totalInvestmentInput = document.getElementById('totalInvestment');
         
         let finalReturnSpan = document.getElementById('finalReturn');
@@ -319,6 +351,7 @@
 
             for (let i = 0; i < count; i++) {
                 betsData.push({
+                    name: `Aposta ${i + 1}`,
                     odd: 0,
                     comm: 0,
                     stake: 0,
@@ -326,6 +359,7 @@
                     fixed: false,
                     isFreebet: false,
                     isLay: false,
+                    isExtraction: false,
                     hasBoost: false,
                     boostPercent: 0
                 });
@@ -351,8 +385,11 @@
 
                 col.innerHTML = `
                     <div class="bet-header">
-                        <span class="bet-title" id="title-${i}">Aposta ${i + 1}</span>
+                        <input type="text" class="bet-title-input" id="title-${i}" value="Aposta ${i + 1}" data-index="${i}" title="Clique para renomear (Ex: Bet365, Betano)">
                         <div class="bet-options">
+                            <label title="Reembolso em Freebet se perder nesta casa" class="chk-ext-label">
+                                <input type="checkbox" class="chk-ext" data-index="${i}"> E
+                            </label>
                             <label title="Aposta Contra (Lay - Exchange)" class="chk-lay-label">
                                 <input type="checkbox" class="chk-lay" data-index="${i}"> L
                             </label>
@@ -401,6 +438,13 @@
         }
 
         function attachEvents() {
+            document.querySelectorAll('.bet-title-input').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    let idx = e.target.dataset.index;
+                    betsData[idx].name = e.target.value;
+                });
+            });
+
             document.querySelectorAll('.inp-odd').forEach(el => {
                 el.addEventListener('input', (e) => {
                     let idx = e.target.dataset.index;
@@ -441,6 +485,22 @@
                 });
             });
 
+            document.querySelectorAll('.chk-ext').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    let idx = e.target.dataset.index;
+                    let isExt = e.target.checked;
+                    betsData[idx].isExtraction = isExt;
+
+                    let col = document.getElementById(`col-${idx}`);
+                    if (isExt) {
+                        col.classList.add('is-ext-mode');
+                    } else {
+                        col.classList.remove('is-ext-mode');
+                    }
+                    recalculate('total');
+                });
+            });
+
             document.querySelectorAll('.chk-lay').forEach(el => {
                 el.addEventListener('change', (e) => {
                     let idx = e.target.dataset.index;
@@ -450,18 +510,15 @@
                     let col = document.getElementById(`col-${idx}`);
                     let lblStake = document.getElementById(`lbl-stake-${idx}`);
                     let groupResp = document.getElementById(`group-resp-${idx}`);
-                    let title = document.getElementById(`title-${idx}`);
 
                     if (isLay) {
                         col.classList.add('is-lay-mode');
                         lblStake.innerText = "Stake Lay (R$):";
                         groupResp.style.display = 'flex';
-                        title.innerText = `Aposta ${parseInt(idx) + 1} (LAY)`;
                     } else {
                         col.classList.remove('is-lay-mode');
                         lblStake.innerText = "Apostar (R$):";
                         groupResp.style.display = 'none';
-                        title.innerText = `Aposta ${parseInt(idx) + 1}`;
                     }
 
                     recalculate('total');
@@ -520,6 +577,8 @@
             let roundTo = parseFloat(roundToInput.value) || 0.01;
             if (roundTo <= 0) roundTo = 0.01;
 
+            let extPercent = (parseFloat(extRateInput.value) || 70) / 100;
+
             let validOdds = true;
             let effectiveOdds = [];
             let freebetMultiplier = [];
@@ -542,7 +601,6 @@
 
                 let effOdd = 0;
                 if (betsData[i].isLay) {
-                    // Para Lay em Exchange: Odd efetiva de cobertura para cálculo de stake
                     effOdd = o - (c / 100);
                 } else {
                     effOdd = 1 + (o - 1) * (1 - c / 100);
@@ -570,8 +628,25 @@
 
             let stakes = new Array(count).fill(0);
             let fbIndex = betsData.findIndex(b => b.isFreebet);
+            let extIndex = betsData.findIndex(b => b.isExtraction);
 
-            if (fbIndex !== -1 && activeFixedIndex === -1 && !trigger.startsWith('stake-')) {
+            // CÁLCULO DE EXTRAÇÃO DE REEMBOLSO (FLAG E)
+            if (extIndex !== -1 && !trigger.startsWith('stake-') && activeFixedIndex === -1) {
+                let extStake = parseFloat(document.querySelectorAll('.inp-stake')[extIndex].value) || 50;
+                stakes[extIndex] = extStake;
+
+                // Em aposta com reembolso em FB, se a casa perder você reavalia a perda devolvendo extPercent
+                let targetReturn = extStake * (effectiveOdds[extIndex] - extPercent);
+
+                for (let i = 0; i < count; i++) {
+                    if (i !== extIndex) {
+                        let rawS = targetReturn / freebetMultiplier[i];
+                        stakes[i] = Math.round(rawS / roundTo) * roundTo;
+                    }
+                }
+            }
+            // CÁLCULO DE APOSTA COM FREEBET JA EXISTENTE (FLAG FB)
+            else if (fbIndex !== -1 && activeFixedIndex === -1 && !trigger.startsWith('stake-')) {
                 let fbStake = parseFloat(document.querySelectorAll('.inp-stake')[fbIndex].value) || 50;
                 stakes[fbIndex] = fbStake;
                 
@@ -583,7 +658,9 @@
                         stakes[i] = Math.round(rawS / roundTo) * roundTo;
                     }
                 }
-            } else if (activeFixedIndex !== -1 || trigger.startsWith('stake-')) {
+            } 
+            // CÁLCULO DE APOSTA FIXA / MANUAL
+            else if (activeFixedIndex !== -1 || trigger.startsWith('stake-')) {
                 let fixIdx = activeFixedIndex !== -1 ? activeFixedIndex : parseInt(trigger.split('-')[1]);
                 let baseStake = parseFloat(document.querySelectorAll('.inp-stake')[fixIdx].value) || 0;
                 
@@ -598,7 +675,9 @@
                         }
                     }
                 }
-            } else {
+            } 
+            // CÁLCULO PADRÃO PELO INVESTIMENTO TOTAL
+            else {
                 let totalInvest = parseFloat(totalInvestmentInput.value) || 0;
                 let invSum = 0;
                 for (let i = 0; i < count; i++) {
@@ -626,7 +705,6 @@
             for (let i = 0; i < count; i++) {
                 if (!betsData[i].isFreebet) {
                     if (betsData[i].isLay) {
-                        // Investimento do próprio bolso no Lay é a Responsabilidade
                         let liability = stakes[i] * (betsData[i].odd - 1);
                         ownPocketInvest += liability;
                     } else {
@@ -656,6 +734,13 @@
                 }
 
                 let ret = stakes[i] * freebetMultiplier[i];
+
+                // Se a casa com Flag "E" (Extração/Reembolso) PERDER, adicionamos o valor convertido da Freebet ao retorno
+                if (extIndex !== -1 && i !== extIndex) {
+                    let fbRefundValue = stakes[extIndex] * extPercent;
+                    ret += fbRefundValue;
+                }
+
                 let prof = ret - ownPocketInvest;
 
                 returns.push(ret);
@@ -699,6 +784,7 @@
         });
 
         roundToInput.addEventListener('input', () => recalculate('total'));
+        extRateInput.addEventListener('input', () => recalculate('total'));
         totalInvestmentInput.addEventListener('input', () => recalculate('total'));
 
         buildBetColumns(3);
