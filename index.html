@@ -740,17 +740,19 @@
                     if (respDiv) respDiv.innerText = liability.toFixed(2);
                 }
 
+                // RETORNO LÍQUIDO SECO: Exibe apenas dinheiro real retornado na casa (Stake x Odd)
                 let ret = stakes[i] * freebetMultiplier[i];
 
-                // Adiciona o valor estimado da Freebet resgatada se a casa do Bônus (Flag E) PERDER
+                // RETORNO TOTAL COM FREEBET (Usado apenas para cálculo do Lucro Líquido Real)
+                let retTotalComFb = ret;
                 if (extIndex !== -1 && i !== extIndex) {
                     let fbRefundValue = stakes[extIndex] * extPercent;
-                    ret += fbRefundValue;
+                    retTotalComFb += fbRefundValue;
                 }
 
-                let prof = ret - ownPocketInvest;
+                let prof = retTotalComFb - ownPocketInvest;
 
-                returns.push(ret);
+                returns.push(retTotalComFb);
                 profits.push(prof);
 
                 let retDiv = document.getElementById(`return-${i}`);
